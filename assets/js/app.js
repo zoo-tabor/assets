@@ -2,6 +2,32 @@
 (function () {
     'use strict';
 
+    // --- Hromadny vyber v seznamu majetku ---
+    var bulkBar = document.getElementById('bulk-bar');
+    if (bulkBar) {
+        var checks = function () { return document.querySelectorAll('.bulk-check'); };
+        var selected = function () {
+            return Array.prototype.filter.call(checks(), function (c) { return c.checked; })
+                .map(function (c) { return c.value; });
+        };
+        var refresh = function () {
+            var ids = selected();
+            bulkBar.style.display = ids.length ? 'flex' : 'none';
+            document.getElementById('bulk-count').textContent = ids.length;
+            bulkBar.querySelectorAll('[data-bulk]').forEach(function (a) {
+                a.href = a.dataset.bulk + '?ids=' + ids.join(',');
+            });
+        };
+        Array.prototype.forEach.call(checks(), function (c) { c.addEventListener('change', refresh); });
+        var all = document.getElementById('bulk-all');
+        if (all) {
+            all.addEventListener('change', function () {
+                Array.prototype.forEach.call(checks(), function (c) { c.checked = all.checked; });
+                refresh();
+            });
+        }
+    }
+
     // --- Prepinac light/dark ---
     var toggle = document.getElementById('theme-toggle');
     if (toggle) {

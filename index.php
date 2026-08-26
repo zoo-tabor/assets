@@ -27,6 +27,7 @@ use App\Controllers\DialController;
 use App\Controllers\PersonController;
 use App\Controllers\FileController;
 use App\Controllers\MigrateController;
+use App\Controllers\MovementController;
 use App\Controllers\OrgController;
 use App\Controllers\SettingsOrgController;
 use App\Controllers\SettingsUserController;
@@ -73,6 +74,12 @@ $router->add('GET', '/nastaveni/vlastni-pole', [SettingsFieldController::class, 
 $router->add('POST', '/nastaveni/vlastni-pole/pridat', [SettingsFieldController::class, 'add']);
 $router->add('POST', '/nastaveni/vlastni-pole/{id}/upravit', [SettingsFieldController::class, 'edit']);
 $router->add('POST', '/nastaveni/vlastni-pole/{id}/smazat', [SettingsFieldController::class, 'delete']);
+
+// Pohyby
+foreach (['vydej', 'vraceni', 'presun', 'vyrazeni', 'rezervace'] as $mv) {
+    $router->add('GET|POST', '/' . $mv, [MovementController::class, $mv]);
+}
+$router->add('GET', '/pohyby', [MovementController::class, 'history']);
 
 // Zamestnanci
 $router->add('GET', '/zamestnanci', [PersonController::class, 'index']);

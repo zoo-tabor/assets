@@ -88,9 +88,21 @@ $sortLink = function (string $key, string $label) use ($qs, $sortKey, $desc): st
         <?php endif; ?>
     </form>
 
+    <?php if (!$isAll): ?>
+        <div class="bulk-bar" id="bulk-bar" style="display:none">
+            <span><span id="bulk-count">0</span> vybráno:</span>
+            <a class="btn btn-ghost btn-sm" data-bulk="/vydej">Vydat</a>
+            <a class="btn btn-ghost btn-sm" data-bulk="/vraceni">Vrátit</a>
+            <a class="btn btn-ghost btn-sm" data-bulk="/presun">Přesunout</a>
+            <a class="btn btn-ghost btn-sm" data-bulk="/rezervace">Rezervovat</a>
+            <a class="btn btn-ghost btn-sm" data-bulk="/vyrazeni">Vyřadit</a>
+        </div>
+    <?php endif; ?>
+
     <table class="table">
         <thead>
         <tr>
+            <?php if (!$isAll): ?><th class="col-check"><input type="checkbox" id="bulk-all" title="Vybrat vše"></th><?php endif; ?>
             <th><?= $sortLink('tag', 'Tag ID') ?></th>
             <?php if ($isAll): ?><th>Organizace</th><?php endif; ?>
             <th><?= $sortLink('popis', 'Popis') ?></th>
@@ -105,6 +117,7 @@ $sortLink = function (string $key, string $label) use ($qs, $sortKey, $desc): st
         <tbody>
         <?php foreach ($assets as $a): ?>
             <tr>
+                <?php if (!$isAll): ?><td class="col-check"><input type="checkbox" class="bulk-check" value="<?= (int)$a['id'] ?>"></td><?php endif; ?>
                 <td><a href="<?= e(url('/majetek/' . $a['id'])) ?>"><code><?= e($a['tag_id']) ?></code></a></td>
                 <?php if ($isAll): ?>
                     <td><span class="org-dot" style="background: <?= e($a['accent_color']) ?>"></span> <?= e($a['org_name']) ?></td>
@@ -119,7 +132,7 @@ $sortLink = function (string $key, string $label) use ($qs, $sortKey, $desc): st
             </tr>
         <?php endforeach; ?>
         <?php if ($assets === []): ?>
-            <tr><td colspan="<?= $isAll ? 9 : 8 ?>" class="muted">Žádný majetek<?= $q !== '' ? ' pro hledaný výraz' : '' ?>.</td></tr>
+            <tr><td colspan="<?= $isAll ? 9 : 9 ?>" class="muted">Žádný majetek<?= $q !== '' ? ' pro hledaný výraz' : '' ?>.</td></tr>
         <?php endif; ?>
         </tbody>
     </table>

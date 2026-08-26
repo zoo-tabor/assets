@@ -10,8 +10,22 @@ $eventLabels = [
 <div class="page-head">
     <h1><code><?= e($asset['tag_id']) ?></code> — <?= e($asset['description']) ?></h1>
     <div class="page-head-actions">
+        <?php $ids = '?ids=' . (int)$asset['id']; ?>
+        <?php if (in_array($asset['status'], ['available', 'reserved'], true)): ?>
+            <a class="btn btn-ghost" href="<?= e(url('/vydej') . $ids) ?>">Vydat</a>
+        <?php endif; ?>
+        <?php if (in_array($asset['status'], ['assigned', 'reserved'], true)): ?>
+            <a class="btn btn-ghost" href="<?= e(url('/vraceni') . $ids) ?>"><?= $asset['status'] === 'reserved' ? 'Zrušit rezervaci' : 'Vrátit' ?></a>
+        <?php endif; ?>
+        <?php if ($asset['status'] === 'available'): ?>
+            <a class="btn btn-ghost" href="<?= e(url('/rezervace') . $ids) ?>">Rezervovat</a>
+        <?php endif; ?>
+        <?php if ($asset['status'] !== 'disposed'): ?>
+            <a class="btn btn-ghost" href="<?= e(url('/presun') . $ids) ?>">Přesunout</a>
+            <a class="btn btn-ghost" href="<?= e(url('/vyrazeni') . $ids) ?>">Vyřadit</a>
+        <?php endif; ?>
         <a class="btn btn-primary" href="<?= e(url('/majetek/' . $asset['id'] . '/upravit')) ?>">Upravit</a>
-        <a class="btn btn-ghost" href="<?= e(url('/majetek')) ?>">Zpět na seznam</a>
+        <a class="btn btn-ghost" href="<?= e(url('/majetek')) ?>">Zpět</a>
     </div>
 </div>
 
