@@ -72,7 +72,7 @@ $today = date('Y-m-d');
                         <td class="<?= $u['due_date'] < $today ? 'overdue' : '' ?>"><?= e(format_date($u['due_date'])) ?><?= $u['due_date'] < $today ? ' ⚠' : '' ?></td>
                         <td><a href="<?= e(url('/majetek/' . $u['id'])) ?>"><code><?= e($u['tag_id']) ?></code></a> <?= e($u['description']) ?></td>
                         <td><?= e($u['person_name'] ?? '—') ?></td>
-                        <td><?= e($u['type'] === 'reserve' ? 'rezervace' : 'vrácení') ?></td>
+                        <td><?= e(['checkout' => 'vrácení', 'reserve' => 'rezervace', 'warranty' => 'záruka', 'maintenance' => 'údržba'][$u['kind']] ?? $u['kind']) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 </tbody>

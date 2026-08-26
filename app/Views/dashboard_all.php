@@ -43,11 +43,12 @@ $today = date('Y-m-d');
             <p class="muted">Žádné termíny vrácení ani rezervací.</p>
         <?php else: ?>
             <table class="table">
-                <thead><tr><th>Termín</th><th>Majetek</th><th>Organizace</th><th>Osoba</th></tr></thead>
+                <thead><tr><th>Termín</th><th>Typ</th><th>Majetek</th><th>Organizace</th><th>Osoba</th></tr></thead>
                 <tbody>
                 <?php foreach ($upcoming as $u): ?>
                     <tr>
                         <td class="<?= $u['due_date'] < $today ? 'overdue' : '' ?>"><?= e(format_date($u['due_date'])) ?><?= $u['due_date'] < $today ? ' ⚠' : '' ?></td>
+                        <td><?= e(['checkout' => 'vrácení', 'reserve' => 'rezervace', 'warranty' => 'záruka', 'maintenance' => 'údržba'][$u['kind']] ?? $u['kind']) ?></td>
                         <td><a href="<?= e(url('/majetek/' . $u['id'])) ?>"><code><?= e($u['tag_id']) ?></code></a> <?= e($u['description']) ?></td>
                         <td><?= e($u['org_name']) ?></td>
                         <td><?= e($u['person_name'] ?? '—') ?></td>

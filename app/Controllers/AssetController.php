@@ -251,6 +251,21 @@ final class AssetController
             [$asset['id']]
         );
 
+        $warranty = $db->one('SELECT * FROM warranties WHERE asset_id = ?', [$asset['id']]);
+        $maintenances = $db->all('SELECT * FROM maintenances WHERE asset_id = ? ORDER BY status = \'done\', due_date IS NULL, due_date, id', [$asset['id']]);
+        $children = $db->all(
+            'SELECT a.id, a.tag_id, a.description FROM asset_links al JOIN assets a ON a.id = al.child_asset_id WHERE al.parent_asset_id = ? ORDER BY a.tag_id',
+            [$asset['id']]
+        );
+        $parents = $db->all(
+            'SELECT a.id, a.tag_id, a.description FROM asset_links al JOIN assets a ON a.id = al.parent_asset_id WHERE al.child_asset_id = ? ORDER BY a.tag_id',
+            [$asset['id']]
+        );
+        $linkable = $db->all(
+            'SELECT id, tag_id, description FROM assets WHERE organization_id = ? AND id <> ? AND status <> ? ORDER BY tag_id',
+            [$asset['organization_id'], $asset['id'], 'disposed']
+        );
+
         View::render('assets/show', [
             'title' => $asset['tag_id'],
             'asset' => $asset,
@@ -259,6 +274,11 @@ final class AssetController
             'customValues' => $customValues,
             'photos' => $photos,
             'documents' => $documents,
+            'warranty' => $warranty,
+            'maintenances' => $maintenances,
+            'children' => $children,
+            'parents' => $parents,
+            'linkable' => $linkable,
         ]);
     }
 

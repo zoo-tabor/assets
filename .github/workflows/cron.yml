@@ -1,0 +1,20 @@
+name: Denni cron (e-mailova upozorneni)
+
+on:
+  schedule:
+    # 04:30 UTC = 06:30 v Praze (letni cas) / 05:30 (zimni)
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Zavolat cron endpoint
+        run: |
+          set -e
+          if [ -z "${{ secrets.CRON_KEY }}" ]; then
+            echo "Secret CRON_KEY neni nastaven - preskakuji."
+            exit 0
+          fi
+          curl -fsS "https://assets.ekospol.cz/cron/run?key=${{ secrets.CRON_KEY }}"

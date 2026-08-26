@@ -133,6 +133,115 @@ $eventLabels = [
     </div>
 </div>
 
+<div class="detail-grid">
+    <div class="card">
+        <h2>Záruka</h2>
+        <?php if ($warranty !== null): ?>
+            <?php $expired = $warranty['expires_at'] < date('Y-m-d'); ?>
+            <p>Platí do: <strong class="<?= $expired ? 'overdue' : '' ?>"><?= e(format_date($warranty['expires_at'])) ?><?= $expired ? ' (po záruce)' : '' ?></strong></p>
+            <?php if (!empty($warranty['notes'])): ?><p class="muted"><?= nl2br(e($warranty['notes'])) ?></p><?php endif; ?>
+        <?php else: ?>
+            <p class="muted">Záruka není evidována.</p>
+        <?php endif; ?>
+        <form method="post" action="<?= e(url('/majetek/' . $asset['id'] . '/zaruka')) ?>" class="dial-add" style="flex-wrap: wrap">
+            <?= App\Core\Csrf::field() ?>
+            <input type="date" name="expires_at" value="<?= e($warranty['expires_at'] ?? '') ?>" required style="max-width: 11rem">
+            <input type="text" name="notes" value="<?= e($warranty['notes'] ?? '') ?>" placeholder="poznámka (dodavatel, číslo…)">
+            <button type="submit" class="btn btn-primary btn-sm"><?= $warranty !== null ? 'Upravit' : 'Uložit' ?></button>
+            <?php if ($warranty !== null): ?>
+                </form>
+                <form method="post" action="<?= e(url('/majetek/' . $asset['id'] . '/zaruka/smazat')) ?>" onsubmit="return confirm('Odstranit záruku?')">
+                    <?= App\Core\Csrf::field() ?>
+                    <button type="submit" class="btn btn-ghost btn-sm">Odstranit</button>
+            <?php endif; ?>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Vazby</h2>
+        <?php if ($parents !== []): ?>
+            <p class="muted">Součást:
+                <?php foreach ($parents as $p): ?>
+                    <a href="<?= e(url('/majetek/' . $p['id'])) ?>"><code><?= e($p['tag_id']) ?></code></a>
+                <?php endforeach; ?>
+            </p>
+        <?php endif; ?>
+        <?php if ($children !== []): ?>
+            <table class="table">
+                <tbody>
+                <?php foreach ($children as $ch): ?>
+                    <tr>
+                        <td><a href="<?= e(url('/majetek/' . $ch['id'])) ?>"><code><?= e($ch['tag_id']) ?></code></a> <?= e($ch['description']) ?></td>
+                        <td class="row-actions">
+                            <form method="post" action="<?= e(url('/majetek/' . $asset['id'] . '/vazby/' . $ch['id'] . '/smazat')) ?>">
+                                <?= App\Core\Csrf::field() ?>
+                                <button type="submit" class="btn btn-ghost btn-sm" title="Odebrat vazbu">✕</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php elseif ($parents === []): ?>
+            <p class="muted">Žádné vazby.</p>
+        <?php endif; ?>
+        <form method="post" action="<?= e(url('/majetek/' . $asset['id'] . '/vazby')) ?>" class="dial-add">
+            <?= App\Core\Csrf::field() ?>
+            <select name="child_asset_id" required>
+                <option value="">— přidat součást —</option>
+                <?php foreach ($linkable as $l): ?>
+                    <option value="<?= (int)$l['id'] ?>"><?= e($l['tag_id'] . ' — ' . $l['description']) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">Přidat</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Údržba</h2>
+    <?php if ($maintenances !== []): ?>
+        <table class="table">
+            <thead><tr><th>Popis</th><th>Termín</th><th>Stav</th><th class="num">Cena</th><th>Poznámka</th><th></th></tr></thead>
+            <tbody>
+            <?php foreach ($maintenances as $m): ?>
+                <tr>
+                    <td><?= e($m['title']) ?></td>
+                    <td class="<?= $m['status'] !== 'done' && $m['due_date'] !== null && $m['due_date'] < date('Y-m-d') ? 'overdue' : '' ?>">
+                        <?= e(format_date($m['due_date'])) ?>
+                    </td>
+                    <td><?= $m['status'] === 'done' ? 'dokončeno ' . e(format_date($m['completed_at'])) : 'plánováno' ?></td>
+                    <td class="num"><?= e(format_money($m['cost'])) ?></td>
+                    <td><?= e($m['notes'] ?? '—') ?></td>
+                    <td class="row-actions">
+                        <?php if ($m['status'] !== 'done'): ?>
+                            <form method="post" action="<?= e(url('/majetek/' . $asset['id'] . '/udrzba/' . $m['id'] . '/dokoncit')) ?>" style="display:inline">
+                                <?= App\Core\Csrf::field() ?>
+                                <button type="submit" class="btn btn-ghost btn-sm" title="Označit jako dokončené">✓</button>
+                            </form>
+                        <?php endif; ?>
+                        <form method="post" action="<?= e(url('/majetek/' . $asset['id'] . '/udrzba/' . $m['id'] . '/smazat')) ?>" style="display:inline"
+                              onsubmit="return confirm('Smazat údržbu?')">
+                            <?= App\Core\Csrf::field() ?>
+                            <button type="submit" class="btn btn-ghost btn-sm" title="Smazat">🗑</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    <?php else: ?>
+        <p class="muted">Žádná údržba.</p>
+    <?php endif; ?>
+    <form method="post" action="<?= e(url('/majetek/' . $asset['id'] . '/udrzba')) ?>" class="dial-add" style="flex-wrap: wrap">
+        <?= App\Core\Csrf::field() ?>
+        <input type="text" name="title" placeholder="popis údržby / opravy *" required>
+        <input type="date" name="due_date" title="termín" style="max-width: 11rem">
+        <input type="text" name="cost" placeholder="cena" inputmode="decimal" style="max-width: 7rem">
+        <button type="submit" class="btn btn-primary btn-sm">Naplánovat</button>
+    </form>
+</div>
+
 <div class="card">
     <h2>Historie</h2>
     <?php if ($events === []): ?>

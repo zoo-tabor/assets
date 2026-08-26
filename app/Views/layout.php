@@ -77,6 +77,12 @@ try {
             <a href="<?= e(url('/vyrazeni')) ?>"<?= $isActive('/vyrazeni') ?>>Vyřazení</a>
             <a href="<?= e(url('/pohyby')) ?>"<?= $isActive('/pohyby') ?>>Historie</a>
 
+            <div class="nav-section">Inventura</div>
+            <a href="<?= e(url('/inventury')) ?>"<?= $isActive('/inventury') ?>>Inventury</a>
+
+            <div class="nav-section">Reporty</div>
+            <a href="<?= e(url('/reporty')) ?>"<?= $isActive('/reporty') ?>>Reporty</a>
+
             <div class="nav-section">Nastavení</div>
             <a href="<?= e(url('/nastaveni/organizace')) ?>"<?= $isActive('/nastaveni/organizace') ?>>Organizace</a>
             <a href="<?= e(url('/nastaveni/ciselniky')) ?>"<?= $isActive('/nastaveni/ciselniky') ?>>Číselníky</a>

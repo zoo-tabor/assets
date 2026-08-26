@@ -19,8 +19,12 @@ try {
 use App\Core\Csrf;
 use App\Core\Router;
 use App\Controllers\AssetController;
+use App\Controllers\AssetExtrasController;
 use App\Controllers\AssetFileController;
+use App\Controllers\AuditController;
 use App\Controllers\AuthController;
+use App\Controllers\CronController;
+use App\Controllers\ReportController;
 use App\Controllers\SettingsFieldController;
 use App\Controllers\DashboardController;
 use App\Controllers\DialController;
@@ -64,6 +68,13 @@ $router->add('POST', '/majetek/{id}/fotky/{photoId}/smazat', [AssetFileControlle
 $router->add('POST', '/majetek/{id}/fotky/{photoId}/hlavni', [AssetFileController::class, 'setPrimaryPhoto']);
 $router->add('POST', '/majetek/{id}/dokumenty', [AssetFileController::class, 'uploadDocument']);
 $router->add('POST', '/majetek/{id}/dokumenty/{docId}/smazat', [AssetFileController::class, 'deleteDocument']);
+$router->add('POST', '/majetek/{id}/zaruka', [AssetExtrasController::class, 'saveWarranty']);
+$router->add('POST', '/majetek/{id}/zaruka/smazat', [AssetExtrasController::class, 'deleteWarranty']);
+$router->add('POST', '/majetek/{id}/udrzba', [AssetExtrasController::class, 'addMaintenance']);
+$router->add('POST', '/majetek/{id}/udrzba/{mid}/dokoncit', [AssetExtrasController::class, 'completeMaintenance']);
+$router->add('POST', '/majetek/{id}/udrzba/{mid}/smazat', [AssetExtrasController::class, 'deleteMaintenance']);
+$router->add('POST', '/majetek/{id}/vazby', [AssetExtrasController::class, 'addLink']);
+$router->add('POST', '/majetek/{id}/vazby/{childId}/smazat', [AssetExtrasController::class, 'deleteLink']);
 
 // Soubory majetku (chraneny vydej)
 $router->add('GET', '/soubor/foto/{photoId}', [AssetFileController::class, 'servePhoto']);
@@ -80,6 +91,22 @@ foreach (['vydej', 'vraceni', 'presun', 'vyrazeni', 'rezervace'] as $mv) {
     $router->add('GET|POST', '/' . $mv, [MovementController::class, $mv]);
 }
 $router->add('GET', '/pohyby', [MovementController::class, 'history']);
+
+// Inventury
+$router->add('GET', '/inventury', [AuditController::class, 'index']);
+$router->add('POST', '/inventury/nova', [AuditController::class, 'create']);
+$router->add('GET', '/inventury/{id}', [AuditController::class, 'show']);
+$router->add('POST', '/inventury/{id}/polozka/{assetId}', [AuditController::class, 'mark']);
+$router->add('POST', '/inventury/{id}/uzavrit', [AuditController::class, 'close']);
+
+// Reporty
+$router->add('GET', '/reporty', [ReportController::class, 'index']);
+$router->add('GET', '/reporty/vydej', [ReportController::class, 'checkouts']);
+$router->add('GET', '/reporty/zaruky', [ReportController::class, 'warranties']);
+$router->add('GET', '/reporty/udrzba', [ReportController::class, 'maintenance']);
+
+// Cron
+$router->add('GET', '/cron/run', [CronController::class, 'run']);
 
 // Zamestnanci
 $router->add('GET', '/zamestnanci', [PersonController::class, 'index']);
