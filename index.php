@@ -20,6 +20,8 @@ use App\Core\Csrf;
 use App\Core\Router;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
+use App\Controllers\DialController;
+use App\Controllers\PersonController;
 use App\Controllers\FileController;
 use App\Controllers\MigrateController;
 use App\Controllers\OrgController;
@@ -28,13 +30,6 @@ use App\Controllers\SettingsUserController;
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
-
-// Test pruchodu rewrite pravidel (Faze 0 sonda) - odstranime spolu s probe.php
-if ($path === '/probe-rewrite-test') {
-    header('Content-Type: text/plain; charset=utf-8');
-    echo 'REWRITE OK';
-    exit;
-}
 
 // Globalni CSRF ochrana vsech POST pozadavku (mimo cron)
 if ($method === 'POST' && !str_starts_with($path, '/cron/')) {
@@ -53,6 +48,18 @@ $router->add('GET', '/', [DashboardController::class, 'index']);
 // Prepinani organizace + tema
 $router->add('POST', '/org/switch', [OrgController::class, 'switch']);
 $router->add('POST', '/theme', [AuthController::class, 'theme']);
+
+// Zamestnanci
+$router->add('GET', '/zamestnanci', [PersonController::class, 'index']);
+$router->add('GET|POST', '/zamestnanci/novy', [PersonController::class, 'create']);
+$router->add('GET|POST', '/zamestnanci/import', [PersonController::class, 'import']);
+$router->add('GET|POST', '/zamestnanci/{id}/upravit', [PersonController::class, 'edit']);
+
+// Nastaveni - ciselniky
+$router->add('GET', '/nastaveni/ciselniky', [DialController::class, 'index']);
+$router->add('POST', '/nastaveni/ciselniky/{typ}/pridat', [DialController::class, 'add']);
+$router->add('POST', '/nastaveni/ciselniky/{typ}/{id}/upravit', [DialController::class, 'edit']);
+$router->add('POST', '/nastaveni/ciselniky/{typ}/{id}/smazat', [DialController::class, 'delete']);
 
 // Nastaveni - organizace
 $router->add('GET', '/nastaveni', [SettingsOrgController::class, 'index']);
