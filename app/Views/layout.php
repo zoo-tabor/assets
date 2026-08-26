@@ -66,6 +66,7 @@ try {
         <nav class="sidebar-nav">
             <div class="nav-section">Majetek</div>
             <a href="<?= e(url('/')) ?>"<?= $isActive('/') ?>>Dashboard</a>
+            <a href="<?= e(url('/majetek')) ?>"<?= $isActive('/majetek') ?>>Majetek</a>
             <a href="<?= e(url('/zamestnanci')) ?>"<?= $isActive('/zamestnanci') ?>>Zaměstnanci</a>
 
             <div class="nav-section">Nastavení</div>

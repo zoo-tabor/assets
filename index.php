@@ -18,6 +18,7 @@ try {
 
 use App\Core\Csrf;
 use App\Core\Router;
+use App\Controllers\AssetController;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\DialController;
@@ -48,6 +49,12 @@ $router->add('GET', '/', [DashboardController::class, 'index']);
 // Prepinani organizace + tema
 $router->add('POST', '/org/switch', [OrgController::class, 'switch']);
 $router->add('POST', '/theme', [AuthController::class, 'theme']);
+
+// Majetek
+$router->add('GET', '/majetek', [AssetController::class, 'index']);
+$router->add('GET|POST', '/majetek/novy', [AssetController::class, 'create']);
+$router->add('GET', '/majetek/{id}', [AssetController::class, 'show']);
+$router->add('GET|POST', '/majetek/{id}/upravit', [AssetController::class, 'edit']);
 
 // Zamestnanci
 $router->add('GET', '/zamestnanci', [PersonController::class, 'index']);
