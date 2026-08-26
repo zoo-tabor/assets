@@ -17,6 +17,9 @@ $sortLink = function (string $key, string $label) use ($qs, $sortKey, $desc): st
 <div class="page-head">
     <h1><?= e($title) ?> <span class="muted">(<?= (int)$total ?>)</span></h1>
     <div class="page-head-actions">
+        <?php if (!$isAll): ?>
+            <a class="btn btn-ghost" href="<?= e(url('/majetek/import')) ?>">Import</a>
+        <?php endif; ?>
         <a class="btn btn-ghost" href="<?= e(url('/majetek/export.csv') . '?' . $qs()) ?>">Export CSV</a>
         <a class="btn btn-ghost" href="<?= e(url('/majetek/export.xlsx') . '?' . $qs()) ?>">Export XLSX</a>
         <?php if (!$isAll): ?>
