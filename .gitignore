@@ -1,0 +1,18 @@
+# Tajemstvi - nikdy do gitu
+.env
+
+# Runtime data (uploady, logy) - zije jen na serveru / lokalne
+/data/
+
+# Migracni data z AssetTigeru (exporty, fotky)
+/tools/migration-data/
+asset.xlsx
+
+# Lokalni nastroje a editor
+.claude/
+.idea/
+.vscode/
+*.local
+
+# FTP deploy state (zije jen na serveru)
+.ftp-deploy-sync-state.json
