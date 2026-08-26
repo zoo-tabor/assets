@@ -10,7 +10,7 @@ final class Mailer
 {
     public static function send(string $to, string $subject, string $body): bool
     {
-        $from = Env::get('MAIL_FROM', 'ekospol@ekospol.cz');
+        $from = Env::get('MAIL_FROM', 'assets@ekospol.cz');
         $fromName = Env::get('MAIL_FROM_NAME', 'Evidence majetku');
 
         $headers = [

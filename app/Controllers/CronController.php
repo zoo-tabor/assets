@@ -14,7 +14,8 @@ use App\Core\Mailer;
  */
 final class CronController
 {
-    public function run(): void
+    /** Klic v query (?key=...) i v ceste (/cron/run/{key} - pro Wedos cron bez query stringu) */
+    public function run(string $pathKey = ''): void
     {
         header('Content-Type: text/plain; charset=utf-8');
 
@@ -24,11 +25,20 @@ final class CronController
             echo "CRON_KEY neni nastaven v .env - cron je vypnuty.\n";
             return;
         }
-        if (!hash_equals($cronKey, (string)($_GET['key'] ?? ''))) {
+        $given = $pathKey !== '' ? $pathKey : (string)($_GET['key'] ?? '');
+        if (!hash_equals($cronKey, $given)) {
             http_response_code(403);
             echo "403\n";
             return;
         }
+
+        // pojistka: souhrn max 1x denne, i kdyby byl cron nastaven casteji
+        $lockFile = DATA_PATH . '/cron-last-run.txt';
+        if (($_GET['force'] ?? '') !== '1' && @file_get_contents($lockFile) === date('Y-m-d')) {
+            echo "OK - dnes uz probehlo, preskakuji.\n";
+            return;
+        }
+        @file_put_contents($lockFile, date('Y-m-d'));
 
         $db = Db::instance();
         $sections = [];

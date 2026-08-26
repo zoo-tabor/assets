@@ -105,8 +105,9 @@ $router->add('GET', '/reporty/vydej', [ReportController::class, 'checkouts']);
 $router->add('GET', '/reporty/zaruky', [ReportController::class, 'warranties']);
 $router->add('GET', '/reporty/udrzba', [ReportController::class, 'maintenance']);
 
-// Cron
+// Cron (klic v query i v ceste - Wedos cron neumi query string)
 $router->add('GET', '/cron/run', [CronController::class, 'run']);
+$router->add('GET', '/cron/run/{key}', [CronController::class, 'run']);
 
 // Zamestnanci
 $router->add('GET', '/zamestnanci', [PersonController::class, 'index']);
