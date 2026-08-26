@@ -61,6 +61,10 @@ final class CustomFields
             if ($f['type'] === 'bool') {
                 $value = isset($post[$key]) ? '1' : '0';
             }
+            // select: povolena jen hodnota ze seznamu moznosti
+            if ($f['type'] === 'select' && $value !== '' && !in_array($value, self::optionsList($f), true)) {
+                $value = '';
+            }
             if ($value === '' || ($f['type'] === 'bool' && $value === '0')) {
                 $db->exec('DELETE FROM asset_custom_values WHERE asset_id = ? AND custom_field_id = ?', [$assetId, $f['id']]);
             } else {

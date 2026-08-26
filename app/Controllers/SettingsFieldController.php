@@ -91,6 +91,10 @@ final class SettingsFieldController
                 redirect('/nastaveni/vlastni-pole');
             }
             $options = json_encode($list, JSON_UNESCAPED_UNICODE);
+            if ($options === false) {
+                flash('error', 'Možnosti obsahují neplatné znaky (kódování musí být UTF-8).');
+                redirect('/nastaveni/vlastni-pole');
+            }
         }
 
         $dupe = $db->one(
