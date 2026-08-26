@@ -87,6 +87,30 @@ use App\Core\Csrf;
 
                 <label for="note">Poznámka</label>
                 <textarea name="note" id="note" rows="4"><?= e($values['note']) ?></textarea>
+
+                <?php foreach ($customFields as $cf): $key = 'cf_' . $cf['id']; $val = $customValues[(int)$cf['id']] ?? ''; ?>
+                    <?php if ($cf['type'] === 'bool'): ?>
+                        <label class="checkbox-row" style="margin-top: 0.9rem">
+                            <input type="checkbox" name="<?= e($key) ?>" <?= $val === '1' ? 'checked' : '' ?>> <?= e($cf['name']) ?>
+                        </label>
+                    <?php else: ?>
+                        <label for="<?= e($key) ?>"><?= e($cf['name']) ?></label>
+                        <?php if ($cf['type'] === 'select'): ?>
+                            <select name="<?= e($key) ?>" id="<?= e($key) ?>">
+                                <option value="">—</option>
+                                <?php foreach ($cf['options_list'] as $opt): ?>
+                                    <option value="<?= e($opt) ?>" <?= $val === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php elseif ($cf['type'] === 'date'): ?>
+                            <input type="date" name="<?= e($key) ?>" id="<?= e($key) ?>" value="<?= e($val) ?>">
+                        <?php elseif ($cf['type'] === 'number'): ?>
+                            <input type="text" name="<?= e($key) ?>" id="<?= e($key) ?>" value="<?= e($val) ?>" inputmode="decimal">
+                        <?php else: ?>
+                            <input type="text" name="<?= e($key) ?>" id="<?= e($key) ?>" value="<?= e($val) ?>">
+                        <?php endif; ?>
+                    <?php endif; ?>
+                <?php endforeach; ?>
             </div>
         </div>
 

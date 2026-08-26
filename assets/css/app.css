@@ -386,6 +386,25 @@ input[type="file"] { font: inherit; color: var(--text); }
 }
 .page-current { background: var(--accent); color: #fff; border-color: var(--accent); }
 
+/* --- Fotky ---------------------------------------------------------- */
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+.photo-item img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    display: block;
+}
+.photo-actions { display: flex; gap: 0.25rem; justify-content: center; margin-top: 0.25rem; align-items: center; }
+
+.input-sort { max-width: 4.5rem; }
+
 /* --- Responsivita --------------------------------------------------- */
 @media (max-width: 800px) {
     .app { flex-direction: column; }

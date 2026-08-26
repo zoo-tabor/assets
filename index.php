@@ -19,7 +19,9 @@ try {
 use App\Core\Csrf;
 use App\Core\Router;
 use App\Controllers\AssetController;
+use App\Controllers\AssetFileController;
 use App\Controllers\AuthController;
+use App\Controllers\SettingsFieldController;
 use App\Controllers\DashboardController;
 use App\Controllers\DialController;
 use App\Controllers\PersonController;
@@ -53,8 +55,24 @@ $router->add('POST', '/theme', [AuthController::class, 'theme']);
 // Majetek
 $router->add('GET', '/majetek', [AssetController::class, 'index']);
 $router->add('GET|POST', '/majetek/novy', [AssetController::class, 'create']);
+$router->add('GET', '/majetek/export.{format}', [AssetController::class, 'export']);
 $router->add('GET', '/majetek/{id}', [AssetController::class, 'show']);
 $router->add('GET|POST', '/majetek/{id}/upravit', [AssetController::class, 'edit']);
+$router->add('POST', '/majetek/{id}/fotky', [AssetFileController::class, 'uploadPhotos']);
+$router->add('POST', '/majetek/{id}/fotky/{photoId}/smazat', [AssetFileController::class, 'deletePhoto']);
+$router->add('POST', '/majetek/{id}/fotky/{photoId}/hlavni', [AssetFileController::class, 'setPrimaryPhoto']);
+$router->add('POST', '/majetek/{id}/dokumenty', [AssetFileController::class, 'uploadDocument']);
+$router->add('POST', '/majetek/{id}/dokumenty/{docId}/smazat', [AssetFileController::class, 'deleteDocument']);
+
+// Soubory majetku (chraneny vydej)
+$router->add('GET', '/soubor/foto/{photoId}', [AssetFileController::class, 'servePhoto']);
+$router->add('GET', '/soubor/dokument/{docId}', [AssetFileController::class, 'serveDocument']);
+
+// Nastaveni - vlastni pole
+$router->add('GET', '/nastaveni/vlastni-pole', [SettingsFieldController::class, 'index']);
+$router->add('POST', '/nastaveni/vlastni-pole/pridat', [SettingsFieldController::class, 'add']);
+$router->add('POST', '/nastaveni/vlastni-pole/{id}/upravit', [SettingsFieldController::class, 'edit']);
+$router->add('POST', '/nastaveni/vlastni-pole/{id}/smazat', [SettingsFieldController::class, 'delete']);
 
 // Zamestnanci
 $router->add('GET', '/zamestnanci', [PersonController::class, 'index']);

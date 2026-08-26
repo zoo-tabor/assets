@@ -27,44 +27,9 @@ final class AssetController
         Auth::requireLogin();
         $db = Db::instance();
         $isAll = Org::isAll();
+        $customFields = $isAll ? [] : \App\Core\CustomFields::forOrg(Org::id());
 
-        $where = [];
-        $params = [];
-        if ($isAll) {
-            $where[] = 'o.active = 1';
-        } else {
-            $where[] = 'a.organization_id = ?';
-            $params[] = Org::id();
-        }
-
-        $q = trim((string)($_GET['q'] ?? ''));
-        if ($q !== '') {
-            $where[] = '(a.tag_id LIKE ? OR a.description LIKE ? OR a.brand LIKE ? OR a.model LIKE ? OR a.serial_no LIKE ?)';
-            $like = '%' . $q . '%';
-            array_push($params, $like, $like, $like, $like, $like);
-        }
-        $filters = [];
-        foreach ([['kategorie', 'a.category_id'], ['lokace', 'a.location_id'], ['oddeleni', 'a.department_id'], ['osoba', 'a.assigned_person_id']] as [$key, $col]) {
-            $val = (string)($_GET[$key] ?? '');
-            $filters[$key] = $val;
-            if ($val !== '') {
-                $where[] = "{$col} = ?";
-                $params[] = (int)$val;
-            }
-        }
-        $filters['stav'] = (string)($_GET['stav'] ?? '');
-        if ($filters['stav'] !== '' && isset(self::STATUSES[$filters['stav']])) {
-            $where[] = 'a.status = ?';
-            $params[] = $filters['stav'];
-        }
-        if ($filters['organizace'] = (string)($_GET['organizace'] ?? '')) {
-            if ($isAll) {
-                $where[] = 'a.organization_id = ?';
-                $params[] = (int)$filters['organizace'];
-            }
-        }
-
-        $whereSql = implode(' AND ', $where);
+        [$whereSql, $params, $filters, $q] = $this->listWhere($isAll, $customFields);
 
         $sorts = [
             'tag' => 'a.tag_id', 'popis' => 'a.description', 'cena' => 'a.cost',
@@ -111,7 +76,140 @@ final class AssetController
             'isAll' => $isAll,
             'dials' => $isAll ? null : $this->dials(),
             'organizations' => $isAll ? Org::allActive() : [],
+            'customFields' => $customFields,
         ]);
+    }
+
+    /** Sestavi WHERE + parametry seznamu z GET filtru (sdileno s exportem) */
+    private function listWhere(bool $isAll, array $customFields): array
+    {
+        $where = [];
+        $params = [];
+        if ($isAll) {
+            $where[] = 'o.active = 1';
+        } else {
+            $where[] = 'a.organization_id = ?';
+            $params[] = Org::id();
+        }
+
+        $q = trim((string)($_GET['q'] ?? ''));
+        if ($q !== '') {
+            $where[] = '(a.tag_id LIKE ? OR a.description LIKE ? OR a.brand LIKE ? OR a.model LIKE ? OR a.serial_no LIKE ?)';
+            $like = '%' . $q . '%';
+            array_push($params, $like, $like, $like, $like, $like);
+        }
+        $filters = [];
+        foreach ([['kategorie', 'a.category_id'], ['lokace', 'a.location_id'], ['oddeleni', 'a.department_id'], ['osoba', 'a.assigned_person_id']] as [$key, $col]) {
+            $val = (string)($_GET[$key] ?? '');
+            $filters[$key] = $val;
+            if ($val !== '') {
+                $where[] = "{$col} = ?";
+                $params[] = (int)$val;
+            }
+        }
+        $filters['stav'] = (string)($_GET['stav'] ?? '');
+        if ($filters['stav'] !== '' && isset(self::STATUSES[$filters['stav']])) {
+            $where[] = 'a.status = ?';
+            $params[] = $filters['stav'];
+        }
+        $filters['organizace'] = (string)($_GET['organizace'] ?? '');
+        if ($filters['organizace'] !== '' && $isAll) {
+            $where[] = 'a.organization_id = ?';
+            $params[] = (int)$filters['organizace'];
+        }
+        // filtry vlastnich poli (select / ano-ne)
+        foreach ($customFields as $cf) {
+            if (!in_array($cf['type'], ['select', 'bool'], true)) {
+                continue;
+            }
+            $key = 'cf_' . $cf['id'];
+            $val = (string)($_GET[$key] ?? '');
+            $filters[$key] = $val;
+            if ($val !== '') {
+                $where[] = 'EXISTS (SELECT 1 FROM asset_custom_values v WHERE v.asset_id = a.id AND v.custom_field_id = ? AND v.value = ?)';
+                array_push($params, (int)$cf['id'], $val);
+            }
+        }
+
+        return [implode(' AND ', $where), $params, $filters, $q];
+    }
+
+    /** GET /majetek/export.csv | /majetek/export.xlsx (stejne filtry jako seznam) */
+    public function export(string $format): void
+    {
+        Auth::requireLogin();
+        $db = Db::instance();
+        $isAll = Org::isAll();
+        $customFields = $isAll ? [] : \App\Core\CustomFields::forOrg(Org::id());
+        [$whereSql, $params] = $this->listWhere($isAll, $customFields);
+
+        $assets = $db->all(
+            "SELECT a.*, o.name AS org_name, c.name AS category_name, l.name AS location_name,
+                    d.name AS department_name, p.name AS person_name
+             FROM assets a
+             JOIN organizations o ON o.id = a.organization_id
+             LEFT JOIN categories c ON c.id = a.category_id
+             LEFT JOIN locations l ON l.id = a.location_id
+             LEFT JOIN departments d ON d.id = a.department_id
+             LEFT JOIN persons p ON p.id = a.assigned_person_id
+             WHERE {$whereSql}
+             ORDER BY a.tag_id",
+            $params
+        );
+
+        // hodnoty vlastnich poli jednim dotazem
+        $customValues = [];
+        if ($customFields !== [] && $assets !== []) {
+            $ids = array_column($assets, 'id');
+            $in = implode(',', array_fill(0, count($ids), '?'));
+            foreach ($db->all("SELECT asset_id, custom_field_id, value FROM asset_custom_values WHERE asset_id IN ({$in})", $ids) as $r) {
+                $customValues[(int)$r['asset_id']][(int)$r['custom_field_id']] = (string)($r['value'] ?? '');
+            }
+        }
+
+        $header = ['Tag ID'];
+        if ($isAll) {
+            $header[] = 'Organizace';
+        }
+        array_push($header, 'Popis', 'Značka', 'Model', 'Sériové číslo', 'Kategorie', 'Lokace', 'Oddělení',
+            'Stav', 'Přiděleno', 'Cena', 'Datum nákupu', 'Dodavatel', 'OS', 'OS SN', 'Office', 'Office SN', 'Poznámka');
+        foreach ($customFields as $cf) {
+            $header[] = $cf['name'];
+        }
+
+        $rows = [];
+        foreach ($assets as $a) {
+            $row = [$a['tag_id']];
+            if ($isAll) {
+                $row[] = $a['org_name'];
+            }
+            array_push($row,
+                $a['description'], $a['brand'], $a['model'], $a['serial_no'],
+                $a['category_name'], $a['location_name'], $a['department_name'],
+                self::STATUSES[$a['status']] ?? $a['status'], $a['person_name'],
+                $a['cost'] !== null ? (float)$a['cost'] : '', $a['purchase_date'], $a['purchased_from'],
+                $a['os_type'], $a['os_sn'], $a['office'], $a['office_sn'], $a['note']);
+            foreach ($customFields as $cf) {
+                $row[] = \App\Core\CustomFields::display($cf, $customValues[(int)$a['id']][(int)$cf['id']] ?? null);
+            }
+            $rows[] = $row;
+        }
+
+        $name = 'majetek-' . date('Y-m-d');
+        if ($format === 'xlsx') {
+            \App\Core\Xlsx::download($name . '.xlsx', 'Majetek', $header, $rows);
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $name . '.csv"');
+        $out = fopen('php://output', 'w');
+        fwrite($out, "\xEF\xBB\xBF"); // BOM pro Excel
+        fputcsv($out, $header, ';', '"', '\\');
+        foreach ($rows as $row) {
+            fputcsv($out, array_map(fn($v) => is_float($v) ? str_replace('.', ',', (string)$v) : (string)($v ?? ''), $row), ';', '"', '\\');
+        }
+        fclose($out);
+        exit;
     }
 
     public function create(): void
@@ -144,10 +242,23 @@ final class AssetController
             [$asset['id']]
         );
 
+        $customFields = \App\Core\CustomFields::forOrg((int)$asset['organization_id']);
+        $customValues = \App\Core\CustomFields::valuesFor((int)$asset['id']);
+        $photos = $db->all('SELECT * FROM asset_photos WHERE asset_id = ? ORDER BY is_primary DESC, id', [$asset['id']]);
+        $documents = $db->all(
+            'SELECT d.*, u.name AS user_name FROM asset_documents d LEFT JOIN users u ON u.id = d.uploaded_by
+             WHERE d.asset_id = ? ORDER BY d.uploaded_at DESC',
+            [$asset['id']]
+        );
+
         View::render('assets/show', [
             'title' => $asset['tag_id'],
             'asset' => $asset,
             'events' => $events,
+            'customFields' => $customFields,
+            'customValues' => $customValues,
+            'photos' => $photos,
+            'documents' => $documents,
         ]);
     }
 
@@ -224,6 +335,7 @@ final class AssetController
                     $values['note'] ?: null,
                 ];
 
+                $customFields = \App\Core\CustomFields::forOrg($orgId);
                 if ($asset === null) {
                     $db->exec(
                         'INSERT INTO assets (tag_id, description, brand, model, serial_no, purchase_date, cost,
@@ -233,6 +345,7 @@ final class AssetController
                         [...$params, $orgId, 'available', Auth::id()]
                     );
                     $assetId = $db->insertId();
+                    \App\Core\CustomFields::saveFromPost($assetId, $customFields, $_POST);
                     $this->logEvent($assetId, 'create', 'Majetek založen');
                     // posun automaticke rady (jen pokud jsme tag generovali, nebo rucni tag odpovida rade)
                     $usedNumber = $this->tagNumber((string)$org['tag_prefix'], $values['tag_id']);
@@ -250,10 +363,23 @@ final class AssetController
                          WHERE id = ?',
                         [...$params, $asset['id']]
                     );
+                    \App\Core\CustomFields::saveFromPost((int)$asset['id'], $customFields, $_POST);
                     $this->logEvent((int)$asset['id'], 'edit', 'Údaje upraveny');
                     flash('success', 'Majetek uložen.');
                     redirect('/majetek/' . $asset['id']);
                 }
+            }
+        }
+
+        $formCustomFields = \App\Core\CustomFields::forOrg($orgId);
+        $customValues = $asset !== null ? \App\Core\CustomFields::valuesFor((int)$asset['id']) : [];
+        // po neuspesnem POSTu zachovat vyplnene hodnoty
+        if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
+            foreach ($formCustomFields as $cf) {
+                $key = 'cf_' . $cf['id'];
+                $customValues[(int)$cf['id']] = $cf['type'] === 'bool'
+                    ? (isset($_POST[$key]) ? '1' : '0')
+                    : trim((string)($_POST[$key] ?? ''));
             }
         }
 
@@ -264,6 +390,8 @@ final class AssetController
             'errors' => $errors,
             'dials' => $this->dials(),
             'suggestedTag' => $suggestedTag,
+            'customFields' => $formCustomFields,
+            'customValues' => $customValues,
         ]);
     }
 

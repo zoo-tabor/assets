@@ -72,6 +72,7 @@ try {
             <div class="nav-section">Nastavení</div>
             <a href="<?= e(url('/nastaveni/organizace')) ?>"<?= $isActive('/nastaveni/organizace') ?>>Organizace</a>
             <a href="<?= e(url('/nastaveni/ciselniky')) ?>"<?= $isActive('/nastaveni/ciselniky') ?>>Číselníky</a>
+            <a href="<?= e(url('/nastaveni/vlastni-pole')) ?>"<?= $isActive('/nastaveni/vlastni-pole') ?>>Vlastní pole</a>
             <a href="<?= e(url('/nastaveni/uzivatele')) ?>"<?= $isActive('/nastaveni/uzivatele') ?>>Uživatelé</a>
             <a href="<?= e(url('/admin/migrate')) ?>"<?= $isActive('/admin/migrate') ?>>Migrace DB</a>
         </nav>

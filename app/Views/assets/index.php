@@ -2,11 +2,10 @@
 use App\Controllers\AssetController;
 
 $qs = function (array $overrides = []) use ($q, $filters, $sortKey, $desc): string {
-    $base = array_filter([
-        'q' => $q, 'kategorie' => $filters['kategorie'], 'lokace' => $filters['lokace'],
-        'oddeleni' => $filters['oddeleni'], 'osoba' => $filters['osoba'], 'stav' => $filters['stav'],
-        'organizace' => $filters['organizace'], 'razeni' => $sortKey, 'smer' => $desc ? 'desc' : '',
-    ], fn($v) => $v !== '' && $v !== null);
+    $base = array_filter(
+        array_merge($filters, ['q' => $q, 'razeni' => $sortKey, 'smer' => $desc ? 'desc' : '']),
+        fn($v) => $v !== '' && $v !== null
+    );
     return http_build_query(array_merge($base, $overrides));
 };
 $sortLink = function (string $key, string $label) use ($qs, $sortKey, $desc): string {
@@ -17,9 +16,13 @@ $sortLink = function (string $key, string $label) use ($qs, $sortKey, $desc): st
 ?>
 <div class="page-head">
     <h1><?= e($title) ?> <span class="muted">(<?= (int)$total ?>)</span></h1>
-    <?php if (!$isAll): ?>
-        <a class="btn btn-primary" href="<?= e(url('/majetek/novy')) ?>">+ Nový majetek</a>
-    <?php endif; ?>
+    <div class="page-head-actions">
+        <a class="btn btn-ghost" href="<?= e(url('/majetek/export.csv') . '?' . $qs()) ?>">Export CSV</a>
+        <a class="btn btn-ghost" href="<?= e(url('/majetek/export.xlsx') . '?' . $qs()) ?>">Export XLSX</a>
+        <?php if (!$isAll): ?>
+            <a class="btn btn-primary" href="<?= e(url('/majetek/novy')) ?>">+ Nový majetek</a>
+        <?php endif; ?>
+    </div>
 </div>
 
 <div class="card">
@@ -64,6 +67,21 @@ $sortLink = function (string $key, string $label) use ($qs, $sortKey, $desc): st
                 <option value="<?= e($key) ?>" <?= $filters['stav'] === $key ? 'selected' : '' ?>><?= e($label) ?></option>
             <?php endforeach; ?>
         </select>
+        <?php foreach ($customFields as $cf): ?>
+            <?php if ($cf['type'] === 'select'): $key = 'cf_' . $cf['id']; ?>
+                <select name="<?= e($key) ?>" onchange="this.form.submit()">
+                    <option value="">— <?= e(mb_strtolower($cf['name'])) ?> —</option>
+                    <?php foreach ($cf['options_list'] as $opt): ?>
+                        <option value="<?= e($opt) ?>" <?= ($filters[$key] ?? '') === $opt ? 'selected' : '' ?>><?= e($opt) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            <?php elseif ($cf['type'] === 'bool'): $key = 'cf_' . $cf['id']; ?>
+                <select name="<?= e($key) ?>" onchange="this.form.submit()">
+                    <option value="">— <?= e(mb_strtolower($cf['name'])) ?> —</option>
+                    <option value="1" <?= ($filters[$key] ?? '') === '1' ? 'selected' : '' ?>>Ano</option>
+                </select>
+            <?php endif; ?>
+        <?php endforeach; ?>
         <button type="submit" class="btn btn-ghost">Filtrovat</button>
         <?php if ($q !== '' || array_filter($filters)): ?>
             <a class="muted-link" href="<?= e(url('/majetek')) ?>">zrušit filtry</a>
