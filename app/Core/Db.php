@@ -119,9 +119,12 @@ final class Db
     /** Existuje tabulka? (pro setup rezim a banner migraci) */
     public function tableExists(string $table): bool
     {
+        // SHOW TABLES LIKE ? nelze nativne prepared-ovat -> information_schema
         try {
-            $row = $this->one('SHOW TABLES LIKE ?', [$table]);
-            return $row !== null;
+            return (int)$this->scalar(
+                'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?',
+                [$table]
+            ) > 0;
         } catch (\Throwable) {
             return false;
         }
