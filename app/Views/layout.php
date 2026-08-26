@@ -55,13 +55,29 @@ try {
 <body>
 <div class="app">
     <aside class="sidebar">
-        <div class="sidebar-brand">
-            <?php if ($currentOrg !== null && !empty($currentOrg['logo_file'])): ?>
-                <img src="<?= e(url('/soubor/logo/' . $currentOrg['id'])) ?>" alt="" class="brand-logo">
+        <?php
+        // logo: aktivni organizace; v rezimu "Vsechny organizace" neutralni
+        // branding = prvni organizace s logem (EKOSPOL)
+        $logoOrg = $currentOrg;
+        if ($logoOrg === null || empty($logoOrg['logo_file'])) {
+            foreach ($allOrgs as $o) {
+                if (!empty($o['logo_file'])) {
+                    $logoOrg = $o;
+                    break;
+                }
+            }
+        }
+        ?>
+        <a href="<?= e(url('/')) ?>" class="sidebar-brand" title="Dashboard">
+            <?php if ($logoOrg !== null && !empty($logoOrg['logo_file'])): ?>
+                <span class="brand-logo-wrap">
+                    <img src="<?= e(url('/soubor/logo/' . $logoOrg['id'])) ?>" alt="<?= e($logoOrg['name']) ?>" class="brand-logo">
+                </span>
+            <?php else: ?>
+                <div class="brand-name"><?= e($isAll ? 'Všechny organizace' : ($currentOrg['name'] ?? 'Evidence majetku')) ?></div>
             <?php endif; ?>
-            <div class="brand-name"><?= e($isAll ? 'Všechny organizace' : ($currentOrg['name'] ?? 'Evidence majetku')) ?></div>
-            <div class="brand-sub">Evidence majetku</div>
-        </div>
+            <div class="brand-sub"><?= $isAll ? 'Všechny organizace' : 'Evidence majetku' ?></div>
+        </a>
 
         <nav class="sidebar-nav">
             <div class="nav-section">Majetek</div>

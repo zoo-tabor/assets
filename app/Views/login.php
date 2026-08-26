@@ -19,6 +19,9 @@
 </head>
 <body class="login-page">
 <div class="login-box card">
+    <div class="login-logo-wrap" id="login-logo-wrap" style="display:none">
+        <img id="login-logo" src="" alt="">
+    </div>
     <h1>Evidence majetku</h1>
     <p class="login-sub">Přihlaste se do systému</p>
 
@@ -32,9 +35,9 @@
         <label for="organization">Společnost</label>
         <select name="organization" id="organization">
             <?php foreach ($organizations as $o): ?>
-                <option value="<?= (int)$o['id'] ?>"><?= e($o['name']) ?></option>
+                <option value="<?= (int)$o['id'] ?>" data-logo="<?= !empty($o['logo_file']) ? e(url('/soubor/logo/' . $o['id'])) : '' ?>"><?= e($o['name']) ?></option>
             <?php endforeach; ?>
-            <option value="all">Všechny organizace</option>
+            <option value="all" data-logo="">Všechny organizace</option>
         </select>
 
         <label for="login">Přihlašovací jméno nebo e-mail</label>
@@ -46,5 +49,24 @@
         <button type="submit" class="btn btn-primary btn-block">Přihlásit se</button>
     </form>
 </div>
+<script>
+(function () {
+    var select = document.getElementById('organization');
+    var wrap = document.getElementById('login-logo-wrap');
+    var img = document.getElementById('login-logo');
+    function updateLogo() {
+        var logo = select.options[select.selectedIndex].dataset.logo;
+        if (logo) {
+            img.src = logo;
+            wrap.style.display = '';
+        } else {
+            wrap.style.display = 'none';
+        }
+    }
+    img.addEventListener('error', function () { wrap.style.display = 'none'; });
+    select.addEventListener('change', updateLogo);
+    updateLogo();
+})();
+</script>
 </body>
 </html>

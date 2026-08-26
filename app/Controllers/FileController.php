@@ -11,9 +11,9 @@ use App\Core\Db;
  */
 final class FileController
 {
+    /** Loga jsou verejne brand assety - potrebuje je i login stranka (bez prihlaseni) */
     public function logo(string $id): void
     {
-        Auth::requireLogin();
         $org = Db::instance()->one('SELECT logo_file FROM organizations WHERE id = ?', [(int)$id]);
         if ($org === null || empty($org['logo_file'])) {
             http_response_code(404);
